@@ -1,34 +1,3 @@
-"""
-feature_engineering.py – Derived Features
---------------------------------------------
-Define and justify at least three derived features calculated from multiple
-raw columns that provide deeper insight into urban movement or economics.
-
-Features created
-----------------
-1. trip_duration_min  – (dropoff − pickup) in minutes.
-   *Justification*: Duration is the most intuitive measure of trip length and,
-   combined with distance, reveals congestion and routing efficiency.
-
-2. speed_mph  – trip_distance / (trip_duration in hours).
-   *Justification*: Average trip speed is a proxy for real-time traffic
-   congestion; abnormally low values flag gridlock, high values flag highway
-   or data errors.
-
-3. cost_per_mile  – total_amount / trip_distance.
-   *Justification*: Normalizing cost by distance exposes pricing differences
-   across boroughs, time-of-day, and payment types – useful for equity and
-   economic analysis.
-
-4. tip_percentage  – (tip_amount / fare_amount) × 100.
-   *Justification*: Reveals tipping behavior patterns across zones, times,
-   and payment methods (cash tips are typically unreported).
-
-5. pickup_hour / pickup_day_of_week  – temporal decomposition.
-   *Justification*: Enables aggregation by hour and weekday to study rush-hour
-   demand, weekend vs. weekday patterns, and driver supply gaps.
-"""
-
 import pandas as pd
 
 
