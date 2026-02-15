@@ -15,25 +15,21 @@ ZONE_SHAPEFILE_PATH = ROOT / "taxi_zones" / "taxi_zones.shp"
 
 
 def load_trip_data(path= TRIP_DATA_PATH):
-    """Load trip data from CSV or Parquet (auto-detected by extension)."""
-    suffix = path.suffix.lower()
-    if suffix == ".parquet":
-        df = pd.read_parquet(path)
-    elif suffix == ".csv":
+    try:
         df = pd.read_csv(path)
-    else:
-        raise ValueError(f"Unsupported file format: {suffix}")
+    except FileNotFoundError: 
+        raise FileNotFoundError(
+            f"Trip data file not found at {path}. Please download it from the project README and place it there."
+        )   
     return df
 
 
 def load_zone_lookup(path= ZONE_LOOKUP_PATH):
-    """Load the taxi zone lookup table."""
     df = pd.read_csv(path)
     return df
 
 
 def load_zone_geodata(path= ZONE_SHAPEFILE_PATH):
-    """Load the taxi zone shapefile as a GeoDataFrame."""
     gdf = gpd.read_file(path)
     if gdf.crs is None or gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs("EPSG:4326")
@@ -42,10 +38,6 @@ def load_zone_geodata(path= ZONE_SHAPEFILE_PATH):
 
 
 def integrate_zones(trips: pd.DataFrame, zones: pd.DataFrame,):
-    """
-    Merge the zone lookup onto trip data twice:
-    once for pickup (PULocationID) and once for drop-off (DOLocationID).
-    """
     # Pickup merge
     trips = trips.merge(
         zones,
@@ -53,12 +45,13 @@ def integrate_zones(trips: pd.DataFrame, zones: pd.DataFrame,):
         right_on="LocationID",
         how="left",
     )
+
     #rename the Borough and zone so we know which is for pickup and for dropoff
     trips = trips.rename(
         columns={"Borough": "PU_Borough", "Zone": "PU_Zone", "service_zone": "PU_ServiceZone"}
     ).drop(columns=["LocationID"], errors="ignore")
 
-    # Drop-off merge
+    #drop-off merge
     trips = trips.merge(
         zones,
         left_on="DOLocationID",
@@ -74,6 +67,5 @@ def integrate_zones(trips: pd.DataFrame, zones: pd.DataFrame,):
 
 #function to build the geojson data with location ids
 def build_zone_geodataframe(zones: pd.DataFrame,zone_geo: gpd.GeoDataFrame,) -> gpd.GeoDataFrame:
-    """Merge zone lookup attributes onto zone geometries."""
     merged = zone_geo.merge(zones, on="LocationID", how="left")
     return merged
