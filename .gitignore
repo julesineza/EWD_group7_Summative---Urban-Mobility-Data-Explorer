@@ -1,0 +1,13 @@
+# Large data files - too big for GitHub
+*.csv
+*.db
+database/database_dump.sql
+
+# Python
+__pycache__/
+*.pyc
+.Python
+
+# OS
+.DS_Store
+Thumbs.db
