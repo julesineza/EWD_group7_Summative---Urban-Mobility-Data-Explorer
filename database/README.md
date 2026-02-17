@@ -1,56 +1,64 @@
 # Database Setup
 
 ## Quick Info
-SQLite database with NYC taxi trip data. 5 normalized tables with indexes.
+SQLite database with NYC Yellow Taxi trip data.
+2 tables: zones (dimension) and trips (fact) with engineered features.
+
+## Database Structure
+
+### zones table
+Location reference data (265 NYC taxi zones).
+- zone_id, borough, zone_name, service_zone
+
+### trips table
+Cleaned trip records with engineered features.
+- Raw fields: vendor_id, payment_type, dates, distances, fares
+- Zone fields: pu_borough, do_borough, pu_zone, do_zone, pu_service_zone, do_service_zone
+- Engineered: trip_duration_min, speed_mph, cost_per_mile, tip_percentage, pickup_hour, pickup_day_of_week
 
 ## Files
-- `schema.sql` - Creates all tables
-- `load_data.py` - Loads data from CSV files
-- `database_dump.sql` - Pre-loaded database backup (not in GitHub due to size)
-- `test_database.py` - Tests if database works
+- `schema.sql` - Creates tables and indexes
+- `load_data.py` - Loads and enriches data from CSV files
+- `test_database.py` - Tests database and shows sample queries
 
-## How to Use
+## Setup Instructions
 
-### Option 1: Use the Dump File (Fastest)
-**Note:** `database_dump.sql` (121MB) is too large for GitHub.  
-Contact team member for Google Drive link, or use Option 2.
+### Requirements
 ```bash
-sqlite3 taxi_data.db < database_dump.sql
-python3 test_database.py
+pip3 install pandas
 ```
 
-### Option 2: Build From Scratch
-You need:
+### Data Files Needed
 - yellow_tripdata_2019-01.csv
 - taxi_zone_lookup.csv
 
-Then:
+### Build Database
 ```bash
-pip3 install pandas
 python3 load_data.py
 ```
 
-## Database Tables
-- **trips** - All trip records (main table)
-- **taxi_zones** - Borough and zone names
-- **vendors** - Taxi companies (2 vendors)
-- **payment_types** - Payment methods (6 types)
-- **rate_codes** - Fare types (6 codes)
-
-## Sample Query
-```sql
-sqlite3 taxi_data.db
-
-SELECT z.borough, COUNT(*) as trips
-FROM trips t
-JOIN taxi_zones z ON t.pickup_location_id = z.location_id
-GROUP BY z.borough;
+### Test Database
+```bash
+python3 test_database.py
 ```
 
-## Database Design
-- Normalized (3NF) - no repeated data
-- Foreign keys link tables together
-- Indexes on datetime and location columns for fast queries
+## Indexes
+- idx_pickup_zone - Location queries
+- idx_dropoff_zone - Location queries
+- idx_pickup_time - Time queries
+- idx_payment_type - Payment filtering
+- idx_pickup_hour - Hour-based analysis
+- idx_pickup_dow - Day of week analysis
+
+## Engineered Features
+| Feature | Calculation |
+|---------|-------------|
+| trip_duration_min | dropoff - pickup in minutes |
+| speed_mph | trip_distance / hours |
+| cost_per_mile | total_amount / trip_distance |
+| tip_percentage | (tip / fare) × 100 |
+| pickup_hour | hour extracted from pickup_datetime |
+| pickup_day_of_week | day name from pickup_datetime |
 
 ## Author
 Esther Mahoro - Database Implementation

@@ -1,87 +1,64 @@
--- NYC Taxi Trip Database Schema
--- Database Design and Implementation
+-- ============================================================
+-- Urban Mobility Data Explorer - SQLite Schema
+-- ============================================================
 
--- ============================================
--- DIMENSION TABLES (Reference Data)
--- ============================================
-
--- Vendors (Taxi Service Providers)
-CREATE TABLE vendors (
-    vendor_id INTEGER PRIMARY KEY,
-    vendor_name VARCHAR(100) NOT NULL
+-- ---------- ZONES (lookup / dimension table) -----------------
+CREATE TABLE IF NOT EXISTS zones (
+    zone_id INTEGER PRIMARY KEY,
+    borough TEXT NOT NULL,
+    zone_name TEXT NOT NULL,
+    service_zone TEXT
 );
 
--- Payment Types
-CREATE TABLE payment_types (
-    payment_type_id INTEGER PRIMARY KEY,
-    payment_method VARCHAR(50) NOT NULL
-);
-
--- Rate Codes (Fare Types)
-CREATE TABLE rate_codes (
-    rate_code_id INTEGER PRIMARY KEY,
-    rate_code_name VARCHAR(50) NOT NULL,
-    description TEXT
-);
-
--- Taxi Zones (Borough and Neighborhood Info)
-CREATE TABLE taxi_zones (
-    location_id INTEGER PRIMARY KEY,
-    borough VARCHAR(50),
-    zone_name VARCHAR(100),
-    service_zone VARCHAR(50)
-);
-
--- ============================================
--- FACT TABLE (Trip Records)
--- ============================================
-
-CREATE TABLE trips (
+-- ---------- TRIPS (fact table) -------------------------------
+CREATE TABLE IF NOT EXISTS trips (
     trip_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    -- identifiers
     vendor_id INTEGER,
-    pickup_datetime TIMESTAMP NOT NULL,
-    dropoff_datetime TIMESTAMP NOT NULL,
+    ratecode_id INTEGER,
+    store_and_fwd_flag TEXT,
+    payment_type INTEGER,
+    -- times
+    pickup_datetime TEXT NOT NULL,
+    dropoff_datetime TEXT NOT NULL,
+    -- locations (foreign keys → zones)
+    pickup_zone_id INTEGER,
+    dropoff_zone_id INTEGER,
+    -- zone name columns added by pipeline
+    pu_borough TEXT,
+    do_borough TEXT,
+    pu_zone TEXT,
+    do_zone TEXT,
+    pu_service_zone TEXT,
+    do_service_zone TEXT,
+    -- raw measures
     passenger_count INTEGER,
     trip_distance REAL,
-    rate_code_id INTEGER,
-    store_and_fwd_flag CHAR(1),
-    pickup_location_id INTEGER,
-    dropoff_location_id INTEGER,
-    payment_type_id INTEGER,
+    -- fare breakdown
     fare_amount REAL,
     extra REAL,
     mta_tax REAL,
     tip_amount REAL,
     tolls_amount REAL,
     improvement_surcharge REAL,
-    total_amount REAL,
     congestion_surcharge REAL,
-    
-    -- Foreign Key Constraints
-    FOREIGN KEY (vendor_id) REFERENCES vendors(vendor_id),
-    FOREIGN KEY (pickup_location_id) REFERENCES taxi_zones(location_id),
-    FOREIGN KEY (dropoff_location_id) REFERENCES taxi_zones(location_id),
-    FOREIGN KEY (payment_type_id) REFERENCES payment_types(payment_type_id),
-    FOREIGN KEY (rate_code_id) REFERENCES rate_codes(rate_code_id)
+    total_amount REAL,
+    -- engineered features
+    trip_duration_min REAL,
+    speed_mph REAL,
+    cost_per_mile REAL,
+    tip_percentage REAL,
+    pickup_hour INTEGER,
+    pickup_day_of_week TEXT,
+    -- referential integrity
+    FOREIGN KEY (pickup_zone_id) REFERENCES zones(zone_id),
+    FOREIGN KEY (dropoff_zone_id) REFERENCES zones(zone_id)
 );
 
--- ============================================
--- INDEXES (For Query Performance)
--- ============================================
-
--- Time based queries
-CREATE INDEX idx_pickup_datetime ON trips(pickup_datetime);
-CREATE INDEX idx_dropoff_datetime ON trips(dropoff_datetime);
-
--- Location based queries
-CREATE INDEX idx_pickup_location ON trips(pickup_location_id);
-CREATE INDEX idx_dropoff_location ON trips(dropoff_location_id);
-
--- Common filters
-CREATE INDEX idx_payment_type ON trips(payment_type_id);
-CREATE INDEX idx_fare_amount ON trips(fare_amount);
-CREATE INDEX idx_trip_distance ON trips(trip_distance);
-CREATE INDEX idx_passenger_count ON trips(passenger_count);
-
--- Composite index for common queries
-CREATE INDEX idx_pickup_time_location ON trips(pickup_datetime, pickup_location_id);
+-- ---------- INDEXES for common query patterns ----------------
+CREATE INDEX IF NOT EXISTS idx_pickup_zone ON trips(pickup_zone_id);
+CREATE INDEX IF NOT EXISTS idx_dropoff_zone ON trips(dropoff_zone_id);
+CREATE INDEX IF NOT EXISTS idx_pickup_time ON trips(pickup_datetime);
+CREATE INDEX IF NOT EXISTS idx_payment_type ON trips(payment_type);
+CREATE INDEX IF NOT EXISTS idx_pickup_hour ON trips(pickup_hour);
+CREATE INDEX IF NOT EXISTS idx_pickup_dow ON trips(pickup_day_of_week);
