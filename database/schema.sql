@@ -1,8 +1,6 @@
--- ============================================================
 -- Urban Mobility Data Explorer - SQLite Schema
--- ============================================================
 
--- ---------- ZONES (lookup / dimension table) -----------------
+-- Zones lookup table
 CREATE TABLE IF NOT EXISTS zones (
     zone_id INTEGER PRIMARY KEY,
     borough TEXT NOT NULL,
@@ -10,31 +8,26 @@ CREATE TABLE IF NOT EXISTS zones (
     service_zone TEXT
 );
 
--- ---------- TRIPS (fact table) -------------------------------
+-- Trips fact table
 CREATE TABLE IF NOT EXISTS trips (
     trip_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    -- identifiers
     vendor_id INTEGER,
     ratecode_id INTEGER,
     store_and_fwd_flag TEXT,
     payment_type INTEGER,
-    -- times
     pickup_datetime TEXT NOT NULL,
     dropoff_datetime TEXT NOT NULL,
-    -- locations (foreign keys → zones)
     pickup_zone_id INTEGER,
     dropoff_zone_id INTEGER,
-    -- zone name columns added by pipeline
+    -- zone details added by pipeline
     pu_borough TEXT,
     do_borough TEXT,
     pu_zone TEXT,
     do_zone TEXT,
     pu_service_zone TEXT,
     do_service_zone TEXT,
-    -- raw measures
     passenger_count INTEGER,
     trip_distance REAL,
-    -- fare breakdown
     fare_amount REAL,
     extra REAL,
     mta_tax REAL,
@@ -50,12 +43,11 @@ CREATE TABLE IF NOT EXISTS trips (
     tip_percentage REAL,
     pickup_hour INTEGER,
     pickup_day_of_week TEXT,
-    -- referential integrity
     FOREIGN KEY (pickup_zone_id) REFERENCES zones(zone_id),
     FOREIGN KEY (dropoff_zone_id) REFERENCES zones(zone_id)
 );
 
--- ---------- INDEXES for common query patterns ----------------
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_pickup_zone ON trips(pickup_zone_id);
 CREATE INDEX IF NOT EXISTS idx_dropoff_zone ON trips(dropoff_zone_id);
 CREATE INDEX IF NOT EXISTS idx_pickup_time ON trips(pickup_datetime);
