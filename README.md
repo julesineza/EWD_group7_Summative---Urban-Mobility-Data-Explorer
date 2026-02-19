@@ -220,7 +220,13 @@ Download the following files and place them in the **project root directory**:
 
 1. **Trip Data** — [yellow_tripdata_2019-01.csv](https://drive.google.com/file/d/1qMJ3xv9g6ZeWx87QKOm1UDny8HKyWi8p/view?usp=drive_link) → place in project root
 2. **Zone Lookup** — [taxi_zone_lookup.csv](https://drive.google.com/file/d/1eHZfLLXOeVAdNrK3LVvkmJcMXBhJ2-9d/view?usp=drive_link) → place in project root
-3. **Spatial Data** — [taxi_zones/](https://drive.google.com/drive/folders/1rYP-gFryjMNyYADYRPU3_yA_pAPR8r2N?usp=drive_link) → place entire folder in project root
+3. **Spatial Data** — [taxi_zones.zip](https://drive.google.com/file/d/1nc0Y35CX2M9E97LojHpzPKBicDmpufFJ/view?usp=drive_link) → download and **unzip** into the project root:
+
+   ```bash
+   unzip taxi_zones.zip -d taxi_zones/
+   ```
+
+   This will extract the shapefile components (`taxi_zones.shp`, `.dbf`, `.prj`, `.shx`, etc.) into a `taxi_zones/` folder.
 
 ### 5. Verify File Placement
 
@@ -260,7 +266,7 @@ This will:
 
 **Expected output:** `processed_trips.csv`, `processed_zones.geojson`, and `exclusion_log.csv` in `data_pipeline/output/`
 
-> Processing ~7.6M rows may take several minutes depending on your machine.
+> **⏱️ This step takes a while.** The dataset contains ~7.6 million rows. Depending on your machine, this may take **5–15 minutes**. Please be patient and do not interrupt the process.
 
 ### Step 2: Load Data into the Database
 
@@ -275,6 +281,8 @@ This will:
 - Insert zone data from the lookup CSV
 - Insert processed trip data in 10,000-row batches
 - Print verification counts
+
+> **⏱️ This step also takes time** due to the large volume of records being inserted into the database. Please allow several minutes for completion.
 
 ### Step 3: Verify the Database (Optional)
 
@@ -295,6 +303,8 @@ The server starts on **http://localhost:5000** in debug mode.
 ### Step 5: Open the Dashboard
 
 Navigate to **http://localhost:5000** in your browser. The dashboard will automatically fetch data from the API and render all visualizations.
+
+> **⏱️ Initial dashboard load may take a moment** as the API queries a large dataset. A loading spinner is displayed while data is being fetched. Subsequent interactions will be faster.
 
 ---
 
