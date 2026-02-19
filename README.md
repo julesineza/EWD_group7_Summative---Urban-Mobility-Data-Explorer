@@ -103,6 +103,7 @@ Refer to the [TLC Trip Record User Guide](https://www.nyc.gov/assets/tlc/downloa
 EWD_group7_Summative---Urban-Mobility-Data-Explorer/
 │
 ├── README.md                          # This file
+├── requirements.txt                   # Python dependencies
 ├── yellow_tripdata_2019-01.csv        # Raw trip data (Fact Table)
 ├── taxi_zone_lookup.csv               # Zone lookup (Dimension Table)
 ├── taxi_zones/                        # Spatial metadata (Shapefiles)
@@ -171,20 +172,49 @@ git clone https://github.com/julesineza/EWD_group7_Summative---Urban-Mobility-Da
 cd EWD_group7_Summative---Urban-Mobility-Data-Explorer
 ```
 
-### 2. Install Python Dependencies
+### 2. Create & Activate a Virtual Environment
 
 ```bash
-pip3 install flask pandas geopandas
+python3 -m venv venv
 ```
 
-> **Note:** `geopandas` depends on `fiona`, `shapely`, and `pyproj`. If installation fails, try:
+Activate it:
+
+- **macOS / Linux:**
+  ```bash
+  source venv/bin/activate
+  ```
+- **Windows (PowerShell):**
+  ```powershell
+  .\venv\Scripts\Activate.ps1
+  ```
+- **Windows (CMD):**
+  ```cmd
+  venv\Scripts\activate.bat
+  ```
+
+### 3. Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+This installs the three required packages (and their transitive dependencies):
+
+| Package   | Version | Purpose                                     |
+| --------- | ------- | ------------------------------------------- |
+| Flask     | 3.1.2   | REST API backend server                     |
+| pandas    | 3.0.0   | Data manipulation & pipeline processing     |
+| geopandas | 1.1.2   | Spatial data handling (shapefiles, GeoJSON) |
+
+> **Note:** `geopandas` depends on `shapely`, `pyproj`, and `pyogrio`. If installation fails, try:
 >
 > ```bash
-> pip3 install shapely fiona pyproj
-> pip3 install geopandas
+> pip install shapely pyproj pyogrio
+> pip install geopandas
 > ```
 
-### 3. Download the Source Data
+### 4. Download the Source Data
 
 Download the following files and place them in the **project root directory**:
 
@@ -192,7 +222,7 @@ Download the following files and place them in the **project root directory**:
 2. **Zone Lookup** — [taxi_zone_lookup.csv](https://drive.google.com/file/d/1eHZfLLXOeVAdNrK3LVvkmJcMXBhJ2-9d/view?usp=drive_link) → place in project root
 3. **Spatial Data** — [taxi_zones/](https://drive.google.com/drive/folders/1rYP-gFryjMNyYADYRPU3_yA_pAPR8r2N?usp=drive_link) → place entire folder in project root
 
-### 4. Verify File Placement
+### 5. Verify File Placement
 
 Your project root should contain:
 
