@@ -150,6 +150,21 @@ def borough_stats():
     """)
     return jsonify(rows)
 
+@app.route("/api/fare-vs-distance")
+def fare_vs_distance():
+    #Sample of fare vs distance for scatter plot (random 2000 rows)
+    rows = query("""
+        SELECT
+            trip_distance,
+            fare_amount,
+            total_amount,
+            tip_amount
+        FROM trips
+        WHERE trip_distance > 0 AND fare_amount > 0
+          AND trip_id % 3750 = 0
+        LIMIT 2000
+    """)
+    return jsonify(rows)
 
 @app.route("/api/avg-fare-by-borough")
 def avg_fare_by_borough():
