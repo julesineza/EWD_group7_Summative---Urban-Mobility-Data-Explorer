@@ -6,6 +6,7 @@ from flask import Flask, jsonify, request, g, render_template
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 if not FRONTEND_DIR.exists():
+    # Fallback for a trailing-space folder name: "frontend "
     FRONTEND_DIR = PROJECT_ROOT / "frontend "
 DB_PATH = PROJECT_ROOT / "database" / "taxi_data.db"
 
@@ -18,23 +19,23 @@ app = Flask(
 
 
 def get_db():
-    #Open one connection per request and reuse it
+    """Open one connection per request and reuse it."""
     if "_database" not in g:
         g._database = sqlite3.connect(str(DB_PATH))
-        g._database.row_factory = sqlite3.Row #this line is the one that makes rows behave like dicts when querying them 
+        g._database.row_factory = sqlite3.Row  # this makes the rows behave like dicts for easier querying
     return g._database
 
 
 @app.teardown_appcontext
 def close_db(exception):
-    #for closing the db when request ends 
+    """Automatically close DB when the request ends."""
     db = g.pop("_database", None)
     if db is not None:
         db.close()
 
 
 def query(sql, args=(), one=False):
-    #Run a query and return results as a list of dicts
+    """Run a query and return results as a list of dicts."""
     cur = get_db().execute(sql, args)
     rows = [dict(row) for row in cur.fetchall()]
     return rows[0] if one and rows else rows
@@ -47,6 +48,7 @@ def home():
 
 @app.route("/api/summary")
 def summary():
+    """Total trips, average fare, distance, and duration."""
     data = query("""
         SELECT
             COUNT(*)               AS total_trips,
@@ -57,7 +59,6 @@ def summary():
         FROM trips
     """, one=True)
     return jsonify(data)
-
 
 
 @app.route("/api/trips-by-hour")
@@ -93,60 +94,6 @@ def trips_by_day():
     return jsonify(rows)
 
 
-@app.route("/api/peak-hours")
-def peak_hours():
-    rows = query("""
-        SELECT
-            pickup_hour              AS hour,
-            COUNT(*)                 AS trip_count,
-            ROUND(AVG(fare_amount), 2) AS avg_fare,
-            ROUND(SUM(total_amount), 2) AS total_revenue
-        FROM trips
-        GROUP BY pickup_hour
-        ORDER BY trip_count DESC
-        LIMIT 5
-    """)
-    return jsonify(rows)
-
-
-@app.route("/api/weekday-vs-weekend")
-def weekday_vs_weekend():
-    """Compare weekday vs weekend: trips, avg fare, avg duration."""
-    rows = query("""
-        SELECT
-            CASE
-                WHEN pickup_day_of_week IN ('Saturday', 'Sunday')
-                THEN 'Weekend'
-                ELSE 'Weekday'
-            END AS period,
-            COUNT(*)                          AS trip_count,
-            ROUND(AVG(fare_amount), 2)        AS avg_fare,
-            ROUND(AVG(trip_duration_min), 2)  AS avg_duration_min,
-            ROUND(AVG(trip_distance), 2)      AS avg_distance
-        FROM trips
-        GROUP BY period
-    """)
-    return jsonify(rows)
-
-
-
-@app.route("/api/zone-stats")
-def zone_stats():
-    rows = query("""
-        SELECT
-            z.zone_id,
-            z.zone_name,
-            z.borough,
-            COUNT(*)                          AS pickup_count,
-            ROUND(AVG(t.fare_amount), 2)      AS avg_fare,
-            ROUND(AVG(t.trip_distance), 2)    AS avg_distance,
-            ROUND(AVG(t.trip_duration_min), 2) AS avg_duration_min
-        FROM trips t
-        JOIN zones z ON t.pickup_zone_id = z.zone_id
-        GROUP BY z.zone_id
-        ORDER BY pickup_count DESC
-    """)
-    return jsonify(rows)
 
 
 @app.route("/api/top-pickup-zones")
@@ -169,7 +116,7 @@ def top_pickup_zones():
 
 @app.route("/api/top-dropoff-zones")
 def top_dropoff_zones():
-    #top ten
+    """Top 10 zones by dropoff count."""
     limit = request.args.get("limit", 10, type=int)
     rows = query("""
         SELECT
@@ -187,6 +134,7 @@ def top_dropoff_zones():
 
 @app.route("/api/borough-stats")
 def borough_stats():
+    """Aggregate stats per borough."""
     rows = query("""
         SELECT
             z.borough,
@@ -205,7 +153,7 @@ def borough_stats():
 
 @app.route("/api/avg-fare-by-borough")
 def avg_fare_by_borough():
-    #Average fare per borough. → bar chart.
+    """Average fare per borough. → bar chart."""
     rows = query("""
         SELECT
             z.borough,
@@ -221,43 +169,11 @@ def avg_fare_by_borough():
     return jsonify(rows)
 
 
-@app.route("/api/fare-vs-distance")
-def fare_vs_distance():
-    #Sample of fare vs distance for scatter plot (random 2000 rows)
-    rows = query("""
-        SELECT
-            trip_distance,
-            fare_amount,
-            total_amount,
-            tip_amount
-        FROM trips
-        WHERE trip_distance > 0 AND fare_amount > 0
-        ORDER BY RANDOM()
-        LIMIT 2000
-    """)
-    return jsonify(rows)
-
-
-@app.route("/api/tolls-and-fees")
-def tolls_and_fees():
-    #Hours with the highest tolls, extras, and surcharges
-    rows = query("""
-        SELECT
-            pickup_hour               AS hour,
-            ROUND(AVG(tolls_amount), 2)          AS avg_tolls,
-            ROUND(AVG(extra), 2)                 AS avg_extra,
-            ROUND(AVG(congestion_surcharge), 2)  AS avg_congestion,
-            ROUND(SUM(tolls_amount), 2)          AS total_tolls
-        FROM trips
-        GROUP BY pickup_hour
-        ORDER BY total_tolls DESC
-    """)
-    return jsonify(rows)
-
 
 
 @app.route("/api/top-routes")
 def top_routes():
+    """Top pickup → dropoff routes by frequency."""
     limit = request.args.get("limit", 15, type=int)
     rows = query("""
         SELECT
@@ -276,45 +192,10 @@ def top_routes():
     return jsonify(rows)
 
 
-@app.route("/api/demand-by-hour-borough")
-def demand_by_hour_borough():
-    rows = query("""
-        SELECT
-            z.borough,
-            t.pickup_hour  AS hour,
-            COUNT(*)       AS trip_count
-        FROM trips t
-        JOIN zones z ON t.pickup_zone_id = z.zone_id
-        GROUP BY z.borough, t.pickup_hour
-        ORDER BY z.borough, t.pickup_hour
-    """)
-    return jsonify(rows)
-
-
-@app.route("/api/demand-weekday-weekend-by-zone")
-def demand_weekday_weekend_by_zone():
-    limit = request.args.get("limit", 20, type=int)
-    rows = query("""
-        SELECT
-            z.zone_name,
-            z.borough,
-            SUM(CASE WHEN t.pickup_day_of_week NOT IN ('Saturday','Sunday')
-                     THEN 1 ELSE 0 END) AS weekday_trips,
-            SUM(CASE WHEN t.pickup_day_of_week IN ('Saturday','Sunday')
-                     THEN 1 ELSE 0 END) AS weekend_trips,
-            COUNT(*) AS total_trips
-        FROM trips t
-        JOIN zones z ON t.pickup_zone_id = z.zone_id
-        GROUP BY z.zone_id
-        ORDER BY total_trips DESC
-        LIMIT ?
-    """, (limit,))
-    return jsonify(rows)
-
-
 
 @app.route("/api/geojson")
 def geojson():
+    """Serve the processed zones GeoJSON enriched with DB stats."""
     geojson_path = Path(__file__).resolve().parents[1] / "data_pipeline" / "output" / "processed_zones.geojson"
     if not geojson_path.exists():
         return jsonify({"error": "GeoJSON file not found"}), 404
