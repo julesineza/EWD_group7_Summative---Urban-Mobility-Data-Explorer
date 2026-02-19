@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NYC Taxi Analytics Dashboard</title>
+
+  <!-- Vendor CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- Vendor JS (loaded before module so globals are available) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App JS (ES module entry point) -->
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>Loading NYC taxi data…</p>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div>
+    <h1>NYC Taxi Analytics Dashboard</h1>
+    <span class="subtitle"> Data Explorer — January 2019</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label for="filterBorough">Borough</label>
+      <select id="filterBorough">
+        <option value="">All Boroughs</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="filterDay">Day of Week</label>
+      <select id="filterDay">
+        <option value="">All Days</option>
+        <option value="Monday">Monday</option>
+        <option value="Tuesday">Tuesday</option>
+        <option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option>
+        <option value="Friday">Friday</option>
+        <option value="Saturday">Saturday</option>
+        <option value="Sunday">Sunday</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Hour Range</label>
+      <div class="range-inputs">
+        <input type="number" id="filterHourMin" min="0" max="23" placeholder="0" />
+        <span class="range-sep">&ndash;</span>
+        <input type="number" id="filterHourMax" min="0" max="23" placeholder="23" />
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Fare Range ($)</label>
+      <div class="range-inputs">
+        <input type="number" id="filterFareMin" min="0" step="1" placeholder="Min" />
+        <span class="range-sep">&ndash;</span>
+        <input type="number" id="filterFareMax" min="0" step="1" placeholder="Max" />
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Distance (mi)</label>
+      <div class="range-inputs">
+        <input type="number" id="filterDistMin" min="0" step="0.5" placeholder="Min" />
+        <span class="range-sep">&ndash;</span>
+        <input type="number" id="filterDistMax" min="0" step="0.5" placeholder="Max" />
+      </div>
+    </div>
+    <button class="btn-apply" id="btnApplyFilter">Apply Filters</button>
+    <button class="btn-reset" id="btnResetFilter">Reset</button>
+  </div>
+
+  <!-- Active Filter Tags -->
+  <div id="activeFilters" class="active-filters"></div>
+
+  <!-- KPI Summary -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <span class="label">Total Trips</span>
+      <span class="value" id="kpiTrips">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="label">Avg Fare</span>
+      <span class="value" id="kpiAvgFare">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="label">Avg Distance</span>
+      <span class="value" id="kpiAvgDist">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="label">Avg Duration</span>
+      <span class="value" id="kpiAvgDur">—</span>
+    </div>
+  </div>
+
+
+
+  <!-- Section 1: Time Trends -->
+  <div class="section">
+    <h2 class="section-title">Time Trends: Trip Activity Over Time</h2>
+    <div class="chart-grid cols-2">
+      <div class="card">
+        <h3>Trips by Hour of Day</h3>
+        <canvas id="chartHour"></canvas>
+      </div>
+      <div class="card">
+        <h3>Trips by Day of Week</h3>
+        <canvas id="chartDay"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Geographic Heatmap -->
+  <div class="section">
+    <h2 class="section-title">Geographic Zone Heatmap</h2>
+    <div class="chart-grid cols-1">
+      <div class="card">
+        <h3>Pickup Activity by Taxi Zone</h3>
+        <div style="display:flex;gap:12px;margin-bottom:12px;">
+          <label style="font-size:.8rem;color:var(--text-dim);display:flex;align-items:center;gap:4px;">
+            Color by:
+            <select id="mapMetric" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:.8rem;">
+              <option value="count">Pickup Count</option>
+              <option value="dropoff">Dropoff Count</option>
+              <option value="fare">Avg Fare</option>
+              <option value="distance">Avg Distance</option>
+            </select>
+          </label>
+        </div>
+        <div id="map"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Economic Analysis -->
+  <div class="section">
+    <h2 class="section-title">Economic Analysis: Fare &amp; Distance Patterns</h2>
+    <div class="chart-grid cols-2">
+      <div class="card">
+        <h3>Average Fare by Borough</h3>
+        <canvas id="chartFareBorough"></canvas>
+      </div>
+      <div class="card">
+        <h3>Fare vs Distance</h3>
+        <canvas id="chartScatter"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Trip Flow -->
+  <div class="section">
+    <h2 class="section-title">Trip Flow Analysis: Movement Between Zones</h2>
+    <div class="chart-grid cols-2">
+      <div class="card">
+        <h3>Top 15 Pickup → Dropoff Routes</h3>
+        <div style="overflow-x:auto;">
+          <table class="routes-table" id="routesTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th class="sortable" data-sort="pickup_zone">Pickup Zone <span class="sort-icon">⇅</span></th>
+                <th class="sortable" data-sort="dropoff_zone">Dropoff Zone <span class="sort-icon">⇅</span></th>
+                <th class="sortable" data-sort="trip_count">Trips <span class="sort-icon">⇅</span></th>
+                <th style="min-width:140px;">Volume</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Top 10 Zones</h3>
+        <div style="margin-bottom:20px;">
+          <h4 style="margin:0 0 8px;font-size:.85rem;color:var(--text-dim);">Pickup Zones</h4>
+          <canvas id="chartTopZones"></canvas>
+        </div>
+        <div>
+          <h4 style="margin:0 0 8px;font-size:.85rem;color:var(--text-dim);">Drop-off Zones</h4>
+          <canvas id="chartTopDropoffZones"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end container -->
+
+<!-- Zone Detail Modal -->
+<div class="modal-overlay" id="zoneModal">
+  <div class="modal-content">
+    <button class="modal-close" id="modalClose">&times;</button>
+    <h3 id="modalTitle">Zone Details</h3>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+</body>
+</html>
