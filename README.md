@@ -4,7 +4,7 @@
 
 A full-stack data engineering and visualization platform that ingests, cleans, enriches, and visualizes **January 2019 NYC Yellow Taxi trip data** from the NYC Taxi & Limousine Commission (TLC). The system combines a Python ETL pipeline, a SQLite relational database, a Flask REST API, and an interactive web dashboard to uncover actionable insights into urban transportation patterns.
 
-**Video Walkthrough:** [Watch the demo on Google Drive](https://drive.google.com/YOUR_VIDEO_LINK_HERE)
+**Video Walkthrough:** [Watch the demo on Google Drive](https://drive.google.com/file/d/1NV1U-1oocZKe9KXykttRqvhfuI1UcbcY/view?usp=drive_link)
 
 ---
 
