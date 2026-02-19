@@ -59,7 +59,7 @@ function horizontalBarOpts(tooltipFn) {
   };
 }
 
-// 1. trips by Hour of Day
+// trips by Hour of Day
 export function renderTripsByHour() {
   var f = getClientFilters();
   var rows = state.tripsByHour;
@@ -84,7 +84,7 @@ export function renderTripsByHour() {
   });
 }
 
-// 2. trips by Day of Week
+// trips by Day of Week
 export function renderTripsByDay() {
   var f = getClientFilters();
   var rows = state.tripsByDay;
@@ -107,7 +107,7 @@ export function renderTripsByDay() {
   });
 }
 
-// 3. average Fare by Borough
+// average Fare by Borough
 export function renderFareByBorough() {
   var rows = state.fareByBorough;
   if (!rows || !rows.length) return;
@@ -135,7 +135,7 @@ export function renderFareByBorough() {
   });
 }
 
-// 4. Fare vs Distance scatterplot
+// Fare vs Distance scatterplot
 export function renderScatter() {
   var f = getClientFilters();
   var rows = state.fareVsDistance;
@@ -185,7 +185,7 @@ export function renderScatter() {
   });
 }
 
-// 5. Top 10 Pickup Zones
+// Top 10 Pickup Zones
 export function renderTopZones() {
   var rows = state.topPickupZones;
   if (!rows || !rows.length) return;
@@ -202,7 +202,7 @@ export function renderTopZones() {
   });
 }
 
-// 6. Top 10 Dropoff Zones
+// Top 10 Dropoff Zones
 export function renderTopDropoffZones() {
   var rows = state.topDropoffZones;
   if (!rows || !rows.length) return;
