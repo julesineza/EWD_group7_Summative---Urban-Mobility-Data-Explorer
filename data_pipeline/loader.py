@@ -29,10 +29,19 @@ def load_zone_lookup(path= ZONE_LOOKUP_PATH):
     return df
 
 
-def load_zone_geodata(path= ZONE_SHAPEFILE_PATH):
+def load_zone_geodata(path=ZONE_SHAPEFILE_PATH, simplify_tolerance=0.001):
     gdf = gpd.read_file(path)
     if gdf.crs is None or gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs("EPSG:4326")
+    
+    # simplifying the geometrics so it loads faster 
+    if simplify_tolerance is not None:
+        gdf["geometry"] = gdf["geometry"].simplify(
+            tolerance=simplify_tolerance, 
+            preserve_topology=True
+        )
+        print(f"[loader] Simplified geometries (tolerance={simplify_tolerance})")
+    
     return gdf
 
 
